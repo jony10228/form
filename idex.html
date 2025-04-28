@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registro de Personas</title>
+  <script src="https://cdn.jsdelivr.net/npm/dexie@3.0.0/dist/dexie.min.js"></script>
+  <script>
+    // Crear base de datos y tabla
+    const db = new Dexie("PersonasDB");
+
+    db.version(1).stores({
+      personas: "++id, nombre, apellido, añodeNacimiento"
+    });
+
+    // Función para registrar la persona en la base de datos
+    async function registrarPersona() {
+      const nombre = document.getElementById('nombre').value;
+      const apellido = document.getElementById('apellido').value;
+      const añoNacimiento = parseInt(document.getElementById('añodeNacimiento').value);
+
+      // Guardar en la base de datos
+      await db.personas.add({
+        nombre: nombre,
+        apellido: apellido,
+        añodeNacimiento: añoNacimiento
+      });
+
+      // Limpiar campos
+      document.getElementById('nombre').value = '';
+      document.getElementById('apellido').value = '';
+      document.getElementById('añodeNacimiento').value = '';
+
+      // Mostrar la lista actualizada
+      mostrarPersonas();
+    }
+
+    // Función para mostrar personas con su edad
+    async function mostrarPersonas() {
+      const lista = document.getElementById('personas-lista');
+      lista.innerHTML = ''; // Limpiar lista antes de mostrarla
+
+      // Obtener todas las personas de la base de datos
+      const personas = await db.personas.toArray();
+
+      personas.forEach(persona => {
+        const edad = calcularEdad(persona.añodeNacimiento);
+        const li = document.createElement('li');
+        li.textContent = `${persona.nombre} ${persona.apellido} - Edad: ${edad}`;
+        lista.appendChild(li);
+      });
+    }
+
+    // Función para calcular la edad basada en el año de nacimiento
+    function calcularEdad(añodeNacimiento) {
+      const fechaActual = new Date();
+      const anioActual = fechaActual.getFullYear();
+      const edad = anioActual - añodeNacimiento;
+
+      // Devolver la edad
+      return edad;
+    }
+
+    // Llamar a mostrarPersonas cuando la página cargue
+    window.onload = mostrarPersonas;
+  </script>
+</head>
+<body>
+  <h2>Formulario de Registro de Personas</h2>
+  <input type="text" id="nombre" placeholder="Nombre" required />
+  <input type="text" id="apellido" placeholder="Apellido" required />
+  <input type="number" id="añodeNacimiento" placeholder="Año de Nacimiento" required />
+  <button onclick="registrarPersona()">Registrar</button>
+
+  <h3>Personas Registradas</h3>
+  <ul id="personas-lista"></ul>
+</body>
+</html>
